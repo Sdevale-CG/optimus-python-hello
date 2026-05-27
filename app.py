@@ -7,7 +7,7 @@ app = Flask(__name__)
 def hello_world():
     version = os.environ.get('APP_VERSION', '1.0')
     return f'''
-    🚀 Hello World from Optimus!
+    🚀 Hello World from Optimus AI!
     '''
 
 @app.route('/health')
