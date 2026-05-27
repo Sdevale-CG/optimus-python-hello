@@ -11,7 +11,7 @@ def test_root_returns_hello_message():
     response = client.get('/')
 
     assert response.status_code == 200
-    assert 'Hello World from Optimus!' in response.get_data(as_text=True)
+    assert 'Hello World from Optimus AI!' in response.get_data(as_text=True)
 
 
 def test_health_endpoint_returns_expected_payload():
