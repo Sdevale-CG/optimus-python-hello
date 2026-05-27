@@ -1,3 +1,4 @@
+name: 🚀 Optimus CI/CD Pipeline
 
 on:
   push:
@@ -8,8 +9,8 @@ on:
 env:
   AWS_REGION: us-west-2
   ECR_REPOSITORY: optimus-python-hello
-  EB_APPLICATION_NAME: optimus-python-app
-  EB_ENVIRONMENT_NAME: optimus-python-env
+  EB_APPLICATION_NAME: Optimus-AI          # ← Your existing app
+  EB_ENVIRONMENT_NAME: testing             # ← Your existing environment
   AWS_ACCOUNT_ID: 137360334857
 
 jobs:
@@ -72,7 +73,6 @@ jobs:
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: ${{ github.sha }}
-        SHORT_SHA: ${{ github.sha }}
       run: |
         echo "Building Docker image..."
         
@@ -86,7 +86,6 @@ jobs:
         
         echo "✅ Image pushed successfully!"
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-        echo "image-uri=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
     - name: Update Dockerrun.aws.json
       env:
@@ -102,7 +101,6 @@ jobs:
       run: |
         echo "Creating deployment package..."
         zip -r deploy.zip Dockerrun.aws.json
-        ls -la deploy.zip
         echo "✅ Deployment package created!"
 
     - name: Deploy to Elastic Beanstalk
@@ -110,8 +108,8 @@ jobs:
       with:
         aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        application_name: ${{ env.EB_APPLICATION_NAME }}
-        environment_name: ${{ env.EB_ENVIRONMENT_NAME }}
+        application_name: Optimus-AI               # ← Your existing app
+        environment_name: testing                  # ← Your existing environment  
         version_label: "v-${{ github.sha }}"
         region: ${{ env.AWS_REGION }}
         deployment_package: deploy.zip
@@ -120,8 +118,9 @@ jobs:
     - name: 🎉 Deployment Success
       run: |
         echo "🎉 Deployment completed successfully!"
-        echo "🌍 Your app should be available at your Elastic Beanstalk URL"
+        echo "🌍 Your app is available at: testing.eba-pzebzmdm.us-west-2.elasticbeanstalk.com"
         echo "📝 Deployment details:"
-        echo "   - Image: ${{ steps.build-image.outputs.image-uri }}"
+        echo "   - Image: ${{ steps.build-image.outputs.image }}"
         echo "   - Version: v-${{ github.sha }}"
-        echo "   - Region: ${{ env.AWS_REGION }}"
+        echo "   - Application: Optimus-AI"
+        echo "   - Environment: testing"
