@@ -8,15 +8,6 @@ def hello_world():
     version = os.environ.get('APP_VERSION', '1.0')
     return f'''
     🚀 Hello World from Optimus!
-    Deployed automatically from GitHub Actions
-    Version: {version}
-    AWS Account: 137360334857
-    Region: us-west-2
-    <style>
-        body {{ font-family: Arial; margin: 40px; background: #f0f8ff; }}
-        h1 {{ color: #0066cc; }}
-        p {{ margin: 10px 0; }}
-    </style>
     '''
 
 @app.route('/health')
