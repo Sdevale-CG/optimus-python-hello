@@ -48,47 +48,34 @@ jobs:
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
         echo "image-uri=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
     
-    - name: Generate Dockerrun.aws.json
+    - name: Generate Dockerrun.aws.json (Version 1 for single container)
       run: |
         cat > Dockerrun.aws.json << EOF
         {
-          "AWSEBDockerrunVersion": 2,
-          "containerDefinitions": [
+          "AWSEBDockerrunVersion": "1",
+          "Image": {
+            "Name": "${{ steps.build-image.outputs.image-uri }}",
+            "Update": "true"
+          },
+          "Ports": [
             {
-              "name": "optimus-python-container",
-              "image": "${{ steps.build-image.outputs.image-uri }}",
-              "hostname": "optimus-python-hello",
-              "essential": true,
-              "portMappings": [
-                {
-                  "hostPort": 80,
-                  "containerPort": 5000,
-                  "protocol": "tcp"
-                }
-              ],
-              "memory": 512,
-              "environment": [
-                {
-                  "name": "APP_VERSION",
-                  "value": "${{ github.sha }}"
-                }
-              ],
-              "logConfiguration": {
-                "logDriver": "awslogs",
-                "options": {
-                  "awslogs-group": "/aws/elasticbeanstalk/${{ env.EB_APPLICATION_NAME }}-${{ env.EB_ENVIRONMENT_NAME }}",
-                  "awslogs-region": "${{ env.AWS_REGION }}",
-                  "awslogs-stream-prefix": "optimus"
-                }
-              }
+              "ContainerPort": "5000"
             }
-          ]
+          ],
+          "Volumes": [],
+          "Logging": "/var/log/nginx"
         }
         EOF
+        
+        echo "Generated Dockerrun.aws.json:"
+        cat Dockerrun.aws.json
     
     - name: Generate deployment package
       run: |
         zip -r deploy-${{ github.sha }}.zip Dockerrun.aws.json
+        
+        echo "Deployment package contents:"
+        unzip -l deploy-${{ github.sha }}.zip
     
     - name: Deploy to Elastic Beanstalk
       uses: einaregilsson/beanstalk-deploy@v22
@@ -110,8 +97,14 @@ jobs:
         echo "📊 Version: v${{ github.run_number }}-${{ github.sha }}"
         
         # Wait a moment for the deployment to be ready
-        sleep 30
+        echo "⏳ Waiting for deployment to stabilize..."
+        sleep 60
         
         # Health check
         echo "🔍 Performing health check..."
-        curl -f https://testing.eba-pzebzmdm.us-west-2.elasticbeanstalk.com/health || echo "⚠️ Health check failed, but deployment completed"
+        if curl -f -s https://testing.eba-pzebzmdm.us-west-2.elasticbeanstalk.com/health; then
+          echo "✅ Health check passed!"
+        else
+          echo "⚠️ Health check failed, but deployment may still be starting up"
+          echo "Check the application manually at: https://testing.eba-pzebzmdm.us-west-2.elasticbeanstalk.com"
+        fi
